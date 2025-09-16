@@ -7,7 +7,7 @@ echo "Starting Website Performance Monitoring System"
 echo "=============================================="
 
 # Check if config.json exists, if not create it interactively
-if [ ! -f "config.json" ]; then
+if [ ! -f "config/config.json" ]; then
     echo "Config file not found. Setting up configuration..."
 
     # Prompt for URL
@@ -20,8 +20,9 @@ if [ ! -f "config.json" ]; then
     read -p "Enter reload interval in seconds (default 90): " RELOAD_INTERVAL
     RELOAD_INTERVAL=${RELOAD_INTERVAL:-90}
 
-    # Create config.json
-    cat > config.json << EOF
+    # Create config directory and config.json
+    mkdir -p config
+    cat > config/config.json << EOF
 {
   "monitoring": {
     "target_url": "$TARGET_URL",
@@ -68,7 +69,7 @@ if [ ! -f "config.json" ]; then
 }
 EOF
 
-    echo "Configuration saved to config.json"
+    echo "Configuration saved to config/config.json"
 fi
 
 # Check if virtual environment exists
@@ -126,8 +127,8 @@ mkdir -p reports screenshots
 echo ""
 echo "Current Configuration:"
 echo "====================="
-TARGET_URL=$(python3 -c "import json; print(json.load(open('config.json'))['monitoring']['target_url'])")
-RELOAD_INTERVAL=$(python3 -c "import json; print(json.load(open('config.json'))['monitoring']['reload_interval_seconds'])")
+TARGET_URL=$(python3 -c "import json; print(json.load(open('config/config.json'))['monitoring']['target_url'])")
+RELOAD_INTERVAL=$(python3 -c "import json; print(json.load(open('config/config.json'))['monitoring']['reload_interval_seconds'])")
 echo "Target URL: $TARGET_URL"
 echo "Reload Interval: $RELOAD_INTERVAL seconds"
 echo ""

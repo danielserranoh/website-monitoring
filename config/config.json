@@ -7,11 +7,11 @@
     "wait_for_networkidle": true
   },
   "system_monitoring": {
-    "monitoring_interval_seconds": 5,
+    "monitoring_interval_seconds": 1,
     "memory_spike_threshold_multiplier": 3,
     "cpu_threshold_percent": 80,
     "system_memory_critical_percent": 90,
-    "network_monitoring_interval_seconds": 30
+    "network_monitoring_interval_seconds": 1
   },
   "suspect_services": {
     "curator": {
@@ -26,6 +26,33 @@
       "keywords": ["serviceforce", "whatsapp", "chat"],
       "enabled": true
     }
+  },
+  "memory_leak_detection": {
+    "enabled": true,
+    "sampling_window_minutes": 60,
+    "detection_thresholds": {
+      "chrome_process_memory": {
+        "growth_rate_threshold_mb_per_min": 10,
+        "total_growth_threshold_mb": 500,
+        "percentage_growth_threshold": 200
+      },
+      "js_heap_memory": {
+        "growth_rate_threshold_mb_per_min": 5,
+        "no_gc_duration_threshold_seconds": 300,
+        "heap_fragmentation_threshold": 0.7
+      },
+      "per_reload_analysis": {
+        "memory_not_freed_threshold_mb": 50,
+        "cumulative_leak_per_reload_mb": 10
+      }
+    },
+    "trend_analysis": {
+      "short_term_window_seconds": 300,
+      "medium_term_window_seconds": 1800,
+      "long_term_window_seconds": 3600
+    },
+    "alert_sensitivity": "medium",
+    "log_detailed_analysis": true
   },
   "output": {
     "screenshots_enabled": true,

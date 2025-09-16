@@ -7,9 +7,10 @@ from datetime import datetime
 import threading
 import subprocess
 import os
+from ..detectors.memory_leak_detector import MemoryLeakDetector
 
 class SystemMonitor:
-    def __init__(self, config_file='config.json'):
+    def __init__(self, config_file='config/config.json'):
         self.config = self.load_config(config_file)
         self.log_file = 'system_metrics.log'
         self.interval = self.config['system_monitoring']['monitoring_interval_seconds']
@@ -29,6 +30,12 @@ class SystemMonitor:
         self.cpu_threshold = self.config['system_monitoring']['cpu_threshold_percent']
         self.system_memory_critical = self.config['system_monitoring']['system_memory_critical_percent']
         self.network_interval = self.config['system_monitoring']['network_monitoring_interval_seconds']
+
+        # Initialize memory leak detector if enabled
+        self.memory_leak_detector = None
+        if self.config.get('memory_leak_detection', {}).get('enabled', False):
+            self.memory_leak_detector = MemoryLeakDetector(self.config)
+            self.logger.info("Memory leak detector initialized")
 
     def load_config(self, config_file):
         """Load configuration from JSON file"""
@@ -79,6 +86,13 @@ class SystemMonitor:
                 metrics = self._collect_metrics()
                 self._log_metrics(metrics)
                 self._detect_anomalies(metrics)
+
+                # Memory leak detection
+                if self.memory_leak_detector:
+                    leak_signals = self.memory_leak_detector.add_memory_sample(metrics)
+                    if leak_signals:
+                        self.logger.warning(f"Memory leak signals detected: {', '.join(leak_signals)}")
+
                 time.sleep(self.interval)
             except Exception as e:
                 self.logger.error(f"Error in monitoring loop: {e}")

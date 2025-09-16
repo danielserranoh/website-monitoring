@@ -16,14 +16,17 @@ The system specifically monitors these suspected crash culprits:
 ## ✨ Features
 
 - **Automated Website Monitoring**: Continuous page reloading with crash detection
+- **Advanced Memory Leak Detection**: Real-time detection of memory growth patterns and leaks
 - **System Resource Tracking**: Chrome memory/CPU usage and system performance
 - **Suspect Service Detection**: Monitors processes and network activity for known suspects
 - **Comprehensive Crash Data**: Screenshots, page content, and system state at crash time
-- **Performance Metrics**: Core Web Vitals and loading performance
+- **Performance Metrics**: Core Web Vitals and loading performance with JavaScript heap analysis
 - **Post-Crash Analysis**: Data correlation and pattern identification
 - **Anomaly Detection**: Baseline comparison and threshold monitoring
-- **Enhanced Status Reporting**: Real-time monitoring updates every 30 seconds
+- **Flexible Execution Modes**: Website-only, system-only, or combined monitoring
+- **Professional CLI Interface**: Command-line options for different use cases
 - **Automatic Log Backup**: Timestamped backup system preserves historical data
+- **Modular Architecture**: Clean separation of concerns for easy extension
 - **JSON Configuration**: Fully configurable monitoring parameters
 - **Robust Error Handling**: Graceful handling of permissions and system limitations
 
@@ -36,8 +39,8 @@ The system specifically monitors these suspected crash culprits:
 
 1. **Easy Installation & Run**:
 ```bash
-chmod +x run_monitoring.sh
-./run_monitoring.sh
+chmod +x scripts/run_monitoring.sh
+./scripts/run_monitoring.sh
 ```
 
 2. **Manual Installation**:
@@ -55,54 +58,89 @@ playwright install chromium
 
 ### Option 1: Automated Script (Recommended)
 ```bash
-./run_monitoring.sh
+./scripts/run_monitoring.sh
 ```
 
-### Option 2: Manual Execution
+### Option 2: Professional CLI Interface
 ```bash
-# Terminal 1: Website monitoring
+# Combined monitoring (default)
 python main.py
 
-# Terminal 2: System monitoring
-python system_monitor.py
+# Website monitoring only
+python main.py --website-only
+
+# System monitoring only
+python main.py --system-only
+
+# Run analysis on existing data
+python main.py --analyze
+
+# Use custom configuration
+python main.py --config config/production.json
+
+# Enable verbose logging
+python main.py --verbose
+
+# Get help
+python main.py --help
 ```
 
-### Option 3: Analysis After Crash
+### Option 3: Legacy Manual Execution
 ```bash
-python analyze_crash_data.py
+# For backward compatibility, you can still run components separately
+python -m src.monitors.website_monitor
+python -m src.monitors.system_monitor
 ```
 
-## 📊 Monitoring Components
+## 📊 System Architecture
 
-### **main.py** - Website Monitor
-- Automated page reloading (90-second intervals)
-- Network request monitoring for suspect services
-- Console error and page error logging
-- Performance metrics collection (Core Web Vitals)
-- Screenshot capture on each reload and crash
-- Comprehensive crash data collection
+### **src/monitors/** - Monitoring Components
+- **WebsiteMonitor**: Automated page reloading, network monitoring, crash detection
+- **SystemMonitor**: Chrome/browser memory tracking, system resource monitoring
+- **Real-time integration**: Memory leak detection and anomaly detection
 
-### **system_monitor.py** - System Monitor
-- Chrome/browser memory and CPU tracking
-- System resource utilization monitoring
-- Suspect process detection and tracking
-- Network activity monitoring
-- Anomaly detection with baseline comparison
+### **src/detectors/** - Detection Systems
+- **MemoryLeakDetector**: Advanced memory leak detection with trend analysis
+- **Multi-layer detection**: Trend analysis, garbage collection monitoring, baseline comparison
+- **Configurable thresholds**: Chrome memory, JS heap, per-reload analysis
 
-### **analyze_crash_data.py** - Post-Crash Analysis
-- Crash pattern analysis and correlation
-- Pre-crash system behavior identification
-- Suspect service ranking and recommendations
-- Data visualization and comprehensive reporting
+### **src/analysis/** - Post-Event Analysis
+- **CrashAnalyzer**: Crash pattern analysis and correlation
+- **Pre-crash behavior identification**: System behavior leading to crashes
+- **Data visualization**: Comprehensive reporting and trend charts
+
+### **src/utils/** - Support Systems
+- **ConfigManager**: Centralized configuration with validation
+- **Logger**: Professional logging system with component-specific loggers
+- **Modular design**: Easy to extend and maintain
 
 ## 📈 Performance Metrics
 
 The system tracks:
 - **Core Web Vitals**: FCP, LCP, CLS
 - **Page Performance**: Load times, DOM content loaded
-- **Memory Usage**: JavaScript heap, Chrome processes
+- **Memory Usage**: JavaScript heap, Chrome processes, system memory
 - **System Resources**: CPU, memory, network connections
 - **Suspect Activity**: Process detection, network requests
+
+## 🔍 Memory Leak Detection
+
+Advanced memory leak detection with multiple detection strategies:
+
+### **Detection Patterns**
+- **Short-term rapid growth**: >10MB/min over 5 minutes
+- **Medium-term sustained growth**: >500MB over 30 minutes
+- **Long-term percentage growth**: >200% from baseline
+- **Garbage collection failures**: No GC for >5 minutes
+- **Per-reload memory leaks**: >10MB cumulative per reload
+- **Memory spikes**: Sudden 50%+ increases
+
+### **Analysis Features**
+- **Baseline establishment**: Automatic baseline from first 10 samples
+- **Trend analysis**: Linear regression with R-squared correlation
+- **Cross-reload tracking**: Memory growth patterns across page reloads
+- **Configurable sensitivity**: Adjustable thresholds for different environments
+- **Real-time alerts**: Immediate warnings when leak patterns detected
 
 ## 📁 Data Output
 
@@ -130,7 +168,7 @@ The system tracks:
 
 ## 🔧 Configuration
 
-The system uses a `config.json` file for all configuration. If no config exists, the system will create one interactively.
+The system uses `config/config.json` for all configuration. The new ConfigManager provides validation and defaults. If no config exists, the system will create one interactively.
 
 ### Configuration File Structure
 

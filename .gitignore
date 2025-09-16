@@ -167,3 +167,6 @@ network_activity.log
 # OS files
 .DS_Store
 Thumbs.db
+
+# Specific
+logs/
