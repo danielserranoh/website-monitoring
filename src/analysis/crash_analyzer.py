@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import argparse
 import os
+import numpy as np
+import statistics
 
 class CrashAnalyzer:
     def __init__(self, data_dir='.'):
@@ -121,9 +123,142 @@ class CrashAnalyzer:
 
                 print(f"  Performance records in 10min before crash: {len(pre_crash_data)}")
 
+    def analyze_performance_trends(self):
+        """Analyze performance trends and memory patterns"""
+        if not self.performance_data:
+            print("No performance data available for trend analysis")
+            return {}
+
+        print("\n=== PERFORMANCE TREND ANALYSIS ===")
+
+        # Extract time series data
+        timestamps = [datetime.fromisoformat(d['timestamp']) for d in self.performance_data]
+        chrome_memory = [d['system_metrics']['chrome_memory_mb'] for d in self.performance_data]
+        js_heap = [d['system_metrics'].get('js_heap_mb', 0) for d in self.performance_data if 'js_heap_mb' in d['system_metrics']]
+        load_times = [d['load_time'] for d in self.performance_data]
+
+        analysis = {}
+
+        # Time span analysis
+        duration_minutes = (timestamps[-1] - timestamps[0]).total_seconds() / 60
+        analysis['duration_minutes'] = duration_minutes
+        analysis['data_points'] = len(self.performance_data)
+
+        print(f"Analysis period: {duration_minutes:.1f} minutes")
+        print(f"Data points: {len(self.performance_data)}")
+
+        # Chrome memory analysis
+        memory_initial = chrome_memory[0]
+        memory_final = chrome_memory[-1]
+        memory_peak = max(chrome_memory)
+        memory_min = min(chrome_memory)
+        memory_net_change = memory_final - memory_initial
+        memory_growth_rate = memory_net_change / duration_minutes if duration_minutes > 0 else 0
+
+        analysis['chrome_memory'] = {
+            'initial_mb': memory_initial,
+            'final_mb': memory_final,
+            'peak_mb': memory_peak,
+            'min_mb': memory_min,
+            'net_change_mb': memory_net_change,
+            'growth_rate_mb_per_min': memory_growth_rate
+        }
+
+        print(f"\nChrome Memory:")
+        print(f"  Initial: {memory_initial:.1f} MB")
+        print(f"  Final: {memory_final:.1f} MB")
+        print(f"  Peak: {memory_peak:.1f} MB")
+        print(f"  Net change: {memory_net_change:+.1f} MB")
+        print(f"  Growth rate: {memory_growth_rate:.2f} MB/min")
+
+        # Memory leak assessment using the same thresholds as MemoryLeakDetector
+        leak_threshold = 10.0  # MB/min - matches memory leak detector threshold
+        percentage_threshold = 200.0  # % - significant percentage growth
+        total_growth_threshold = 500.0  # MB - absolute growth threshold
+
+        memory_percentage_growth = (memory_net_change / memory_initial) * 100 if memory_initial > 0 else 0
+
+        leak_signals = []
+        if memory_growth_rate > leak_threshold:
+            leak_signals.append(f"rapid_growth_{memory_growth_rate:.1f}MB/min")
+        if abs(memory_net_change) > total_growth_threshold:
+            leak_signals.append(f"large_growth_{memory_net_change:+.0f}MB")
+        if memory_percentage_growth > percentage_threshold:
+            leak_signals.append(f"percentage_growth_{memory_percentage_growth:.0f}%")
+
+        if leak_signals:
+            print(f"  ⚠️  MEMORY LEAK DETECTED: {', '.join(leak_signals)}")
+            analysis['memory_leak_detected'] = True
+            analysis['memory_leak_signals'] = leak_signals
+        else:
+            print(f"  ✅ No memory leak detected")
+            analysis['memory_leak_detected'] = False
+            analysis['memory_leak_signals'] = []
+
+        # Additional leak analysis
+        analysis['memory_percentage_growth'] = memory_percentage_growth
+
+        # JS Heap analysis
+        if js_heap:
+            heap_initial = js_heap[0]
+            heap_final = js_heap[-1]
+            heap_peak = max(js_heap)
+            heap_net_change = heap_final - heap_initial
+            heap_growth_rate = heap_net_change / duration_minutes if duration_minutes > 0 else 0
+
+            analysis['js_heap'] = {
+                'initial_mb': heap_initial,
+                'final_mb': heap_final,
+                'peak_mb': heap_peak,
+                'net_change_mb': heap_net_change,
+                'growth_rate_mb_per_min': heap_growth_rate
+            }
+
+            print(f"\nJS Heap Memory:")
+            print(f"  Initial: {heap_initial:.1f} MB")
+            print(f"  Final: {heap_final:.1f} MB")
+            print(f"  Peak: {heap_peak:.1f} MB")
+            print(f"  Net change: {heap_net_change:+.1f} MB")
+            print(f"  Growth rate: {heap_growth_rate:.2f} MB/min")
+
+            # Detect GC events
+            gc_events = 0
+            if len(js_heap) > 1:
+                for i in range(1, len(js_heap)):
+                    if js_heap[i] < js_heap[i-1] * 0.9:  # 10% decrease
+                        gc_events += 1
+
+            analysis['gc_events'] = gc_events
+            print(f"  Garbage collection events: {gc_events}")
+
+            if heap_growth_rate < 0:
+                print(f"  ✅ Healthy GC activity (negative growth)")
+            else:
+                print(f"  ⚠️  JS heap growing consistently")
+
+        # Performance analysis
+        avg_load_time = statistics.mean(load_times)
+        load_time_variance = statistics.variance(load_times) if len(load_times) > 1 else 0
+
+        analysis['performance'] = {
+            'avg_load_time_s': avg_load_time,
+            'load_time_variance': load_time_variance,
+            'min_load_time_s': min(load_times),
+            'max_load_time_s': max(load_times)
+        }
+
+        print(f"\nPerformance:")
+        print(f"  Average load time: {avg_load_time:.2f}s")
+        print(f"  Load time range: {min(load_times):.2f}s - {max(load_times):.2f}s")
+
+        return analysis
+
     def generate_report(self):
         """Generate a comprehensive crash analysis report"""
         report_path = os.path.join(self.data_dir, 'reports', 'crash_analysis_report.txt')
+
+        # Get performance trend analysis
+        performance_analysis = self.analyze_performance_trends()
 
         with open(report_path, 'w') as f:
             f.write("WEBSITE CRASH ANALYSIS REPORT\n")
@@ -135,8 +270,53 @@ class CrashAnalyzer:
             f.write(f"Total monitoring sessions: {len(self.performance_data)}\n")
             f.write(f"System metric records: {len(self.system_metrics)}\n\n")
 
+            # Performance trend analysis
+            if performance_analysis:
+                f.write("PERFORMANCE TREND ANALYSIS:\n")
+                f.write("-" * 30 + "\n")
+                f.write(f"Monitoring duration: {performance_analysis['duration_minutes']:.1f} minutes\n")
+                f.write(f"Data points collected: {performance_analysis['data_points']}\n\n")
+
+                if 'chrome_memory' in performance_analysis:
+                    mem = performance_analysis['chrome_memory']
+                    f.write(f"Chrome Memory Trends:\n")
+                    f.write(f"  Initial: {mem['initial_mb']:.1f} MB\n")
+                    f.write(f"  Final: {mem['final_mb']:.1f} MB\n")
+                    f.write(f"  Peak: {mem['peak_mb']:.1f} MB\n")
+                    f.write(f"  Net change: {mem['net_change_mb']:+.1f} MB\n")
+                    f.write(f"  Growth rate: {mem['growth_rate_mb_per_min']:.2f} MB/min\n")
+
+                    if performance_analysis.get('memory_leak_detected', False):
+                        f.write(f"  ⚠️  MEMORY LEAK DETECTED\n")
+                        signals = performance_analysis.get('memory_leak_signals', [])
+                        if signals:
+                            f.write(f"     Signals: {', '.join(signals)}\n")
+                    else:
+                        f.write(f"  ✅ No memory leak detected\n")
+
+                    f.write(f"  Percentage growth: {performance_analysis.get('memory_percentage_growth', 0):.1f}%\n")
+                    f.write("\n")
+
+                if 'js_heap' in performance_analysis:
+                    heap = performance_analysis['js_heap']
+                    f.write(f"JavaScript Heap Trends:\n")
+                    f.write(f"  Initial: {heap['initial_mb']:.1f} MB\n")
+                    f.write(f"  Final: {heap['final_mb']:.1f} MB\n")
+                    f.write(f"  Peak: {heap['peak_mb']:.1f} MB\n")
+                    f.write(f"  Net change: {heap['net_change_mb']:+.1f} MB\n")
+                    f.write(f"  Growth rate: {heap['growth_rate_mb_per_min']:.2f} MB/min\n")
+                    f.write(f"  Garbage collection events: {performance_analysis.get('gc_events', 0)}\n\n")
+
+                if 'performance' in performance_analysis:
+                    perf = performance_analysis['performance']
+                    f.write(f"Page Performance:\n")
+                    f.write(f"  Average load time: {perf['avg_load_time_s']:.2f}s\n")
+                    f.write(f"  Load time range: {perf['min_load_time_s']:.2f}s - {perf['max_load_time_s']:.2f}s\n\n")
+
             # Crash frequency analysis
             if self.crash_data:
+                f.write("CRASH ANALYSIS:\n")
+                f.write("-" * 15 + "\n")
                 crash_times = [datetime.fromisoformat(c['timestamp'].replace('Z', '+00:00')) for c in self.crash_data]
                 if len(crash_times) > 1:
                     time_between_crashes = []
@@ -145,10 +325,10 @@ class CrashAnalyzer:
                         time_between_crashes.append(time_diff)
 
                     avg_time_between = sum(time_between_crashes) / len(time_between_crashes)
-                    f.write(f"Average time between crashes: {avg_time_between:.2f} seconds\n")
+                    f.write(f"Average time between crashes: {avg_time_between:.2f} seconds\n\n")
 
             # Suspected culprits analysis
-            f.write("\nSUSPECT ANALYSIS:\n")
+            f.write("SUSPECT ANALYSIS:\n")
             f.write("-" * 20 + "\n")
 
             culprit_scores = {'curator': 0, 'cookieyes': 0, 'serviceforce': 0}
@@ -162,16 +342,34 @@ class CrashAnalyzer:
             for culprit, score in sorted(culprit_scores.items(), key=lambda x: x[1], reverse=True):
                 f.write(f"{culprit.upper()}: {score} crash mentions\n")
 
-            f.write("\nRECOMMENDations:\n")
+            f.write("\nRECOMMENDATIONS:\n")
             f.write("-" * 15 + "\n")
 
-            max_culprit = max(culprit_scores, key=culprit_scores.get)
-            if culprit_scores[max_culprit] > 0:
-                f.write(f"1. Focus investigation on {max_culprit.upper()} service\n")
+            # Memory-based recommendations
+            if performance_analysis.get('memory_leak_detected', False):
+                f.write("1. URGENT: Memory leak detected - investigate Chrome memory growth\n")
+                signals = performance_analysis.get('memory_leak_signals', [])
+                if any('rapid_growth' in signal for signal in signals):
+                    f.write("   - High growth rate detected (>10MB/min)\n")
+                if any('large_growth' in signal for signal in signals):
+                    f.write("   - Significant absolute growth detected (>500MB)\n")
+                if any('percentage_growth' in signal for signal in signals):
+                    f.write("   - Memory usage increased by >200% from baseline\n")
 
-            f.write("2. Monitor memory usage patterns before crashes\n")
-            f.write("3. Check network requests to suspect services\n")
-            f.write("4. Consider implementing circuit breakers for suspect services\n")
+                if 'js_heap' in performance_analysis and performance_analysis['js_heap']['growth_rate_mb_per_min'] > 1:
+                    f.write("2. JavaScript heap growing - check for event listener leaks or DOM retention\n")
+            else:
+                f.write("1. Memory management appears healthy\n")
+                if performance_analysis.get('memory_percentage_growth', 0) > 50:
+                    f.write("   - Note: Moderate memory growth observed (>50%)\n")
+
+            max_culprit = max(culprit_scores, key=culprit_scores.get) if culprit_scores else None
+            if max_culprit and culprit_scores[max_culprit] > 0:
+                f.write(f"2. Focus investigation on {max_culprit.upper()} service\n")
+
+            f.write("3. Monitor memory usage patterns before crashes\n")
+            f.write("4. Check network requests to suspect services\n")
+            f.write("5. Consider implementing circuit breakers for suspect services\n")
 
         print(f"\nDetailed report saved to: {report_path}")
 

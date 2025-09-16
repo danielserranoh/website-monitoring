@@ -158,13 +158,15 @@ Advanced memory leak detection with multiple detection strategies:
 - **Cross-reload tracking**: Memory growth patterns across page reloads
 - **Configurable sensitivity**: Adjustable thresholds for different environments
 - **Real-time alerts**: Immediate warnings when leak patterns detected
+- **Post-session analysis**: Comprehensive trend analysis in crash reports
+- **Multi-threshold detection**: Rate-based, absolute, and percentage growth assessment
 
 ## 📁 Data Output
 
 ### Reports Directory (`reports/`)
 - `performance_data.jsonl` - Performance metrics per reload
 - `crash_data.json` - Detailed crash information
-- `crash_analysis_report.txt` - Comprehensive analysis report
+- `crash_analysis_report.txt` - Comprehensive analysis report with memory trend analysis
 - `crash_page_*.html` - HTML content at crash time
 - `plots/` - Data visualization charts
 
@@ -270,17 +272,38 @@ Each suspect service can be:
 
 ## 📊 Analysis and Reports
 
-After crashes occur, run the analysis tool:
+Run the comprehensive analysis tool anytime during or after monitoring:
 ```bash
 python main.py --analyze
 ```
 
-This generates:
-- Crash frequency analysis
-- Suspect service correlation scores
-- Pre-crash behavior patterns
-- Memory and CPU trend analysis
-- Actionable recommendations
+### **Enhanced Analysis Features**
+
+**Performance Trend Analysis**:
+- **Memory Growth Tracking**: Chrome process and JavaScript heap trends with growth rate calculation
+- **Memory Leak Detection**: Multi-signal detection using rate, absolute, and percentage thresholds
+- **Garbage Collection Analysis**: Automatic GC event detection and cleanup assessment
+- **Load Performance Metrics**: Average load times, variance analysis, and performance patterns
+
+**Intelligent Reporting**:
+- **Memory Health Assessment**: Real-time leak detection with threshold-based alerts
+- **Growth Rate Analysis**: MB/min calculations with configurable leak thresholds (>10MB/min)
+- **Percentage Growth Tracking**: Baseline comparison with significant growth detection (>200%)
+- **Multi-Pattern Detection**: Rapid growth, large growth, and percentage-based leak signals
+
+**Actionable Insights**:
+- **Memory-Based Recommendations**: Specific actions based on detected memory patterns
+- **Signal Breakdown**: Detailed analysis of leak indicators and their severity
+- **Health Validation**: Confirmation of normal memory management vs leak detection
+
+This generates comprehensive reports including:
+- **Real-time memory trend analysis** with leak detection
+- **JavaScript heap monitoring** with GC event tracking
+- **Performance pattern recognition** across monitoring sessions
+- **Memory growth rate assessment** with threshold-based alerts
+- **Crash correlation analysis** with suspect service scoring
+- **Pre-crash behavior patterns** and system state analysis
+- **Actionable recommendations** based on detected patterns
 
 ## 🎯 Expected Workflow
 
