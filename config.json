@@ -1,0 +1,44 @@
+{
+  "monitoring": {
+    "target_url": "https://udit.es",
+    "reload_interval_seconds": 90,
+    "page_timeout_ms": 30000,
+    "headless_browser": false,
+    "wait_for_networkidle": true
+  },
+  "system_monitoring": {
+    "monitoring_interval_seconds": 5,
+    "memory_spike_threshold_multiplier": 3,
+    "cpu_threshold_percent": 80,
+    "system_memory_critical_percent": 90,
+    "network_monitoring_interval_seconds": 30
+  },
+  "suspect_services": {
+    "curator": {
+      "keywords": ["curator", "social-network", "feed"],
+      "enabled": true
+    },
+    "cookieyes": {
+      "keywords": ["cookieyes", "cookie-consent", "cmp"],
+      "enabled": true
+    },
+    "serviceforce": {
+      "keywords": ["serviceforce", "whatsapp", "chat"],
+      "enabled": true
+    }
+  },
+  "output": {
+    "screenshots_enabled": true,
+    "performance_logging": true,
+    "console_logging": true,
+    "reports_directory": "reports",
+    "screenshots_directory": "screenshots",
+    "logs_directory": "logs"
+  },
+  "logging": {
+    "level": "INFO",
+    "console_output": true,
+    "file_output": true,
+    "log_file": "monitoring.log"
+  }
+}

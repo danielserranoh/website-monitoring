@@ -134,7 +134,8 @@ playwright-report/
 playwright/.cache/
 
 # Screenshots and videos from tests
-screenshots/
+screenshots/*
+!screenshots/.gitkeep
 videos/
 traces/
 
@@ -145,10 +146,16 @@ traces/
 
 # Performance monitoring data
 performance-data/
-reports/
-logs/
+reports/*
+!reports/.gitkeep
+logs/*
+!logs/backup_*
 *.csv
-*.json
+monitoring.log
+system_monitor.log
+website_monitor.log
+system_metrics.log
+network_activity.log
 
 # IDE files
 .vscode/
