@@ -1,0 +1,20 @@
+WEBSITE CRASH ANALYSIS REPORT
+==================================================
+Generated: 2025-09-16T11:40:23.900783
+
+Total crashes detected: 0
+Total monitoring sessions: 4
+System metric records: 70
+
+
+SUSPECT ANALYSIS:
+--------------------
+CURATOR: 0 crash mentions
+COOKIEYES: 0 crash mentions
+SERVICEFORCE: 0 crash mentions
+
+RECOMMENDations:
+---------------
+2. Monitor memory usage patterns before crashes
+3. Check network requests to suspect services
+4. Consider implementing circuit breakers for suspect services

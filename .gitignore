@@ -148,9 +148,17 @@ traces/
 performance-data/
 reports/*
 !reports/.gitkeep
-logs/*
+
+# Logs - keep backups but ignore active logs
+logs/*.log
+logs/network_activity.log
 !logs/backup_*
+!logs/.gitkeep
+
+# Data files
 *.csv
+
+# Legacy log files (in case they appear in root)
 monitoring.log
 system_monitor.log
 website_monitor.log
@@ -167,6 +175,3 @@ network_activity.log
 # OS files
 .DS_Store
 Thumbs.db
-
-# Specific
-logs/

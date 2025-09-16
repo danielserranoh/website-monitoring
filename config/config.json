@@ -66,6 +66,6 @@
     "level": "INFO",
     "console_output": true,
     "file_output": true,
-    "log_file": "monitoring.log"
+    "log_file": "logs/monitoring.log"
   }
 }

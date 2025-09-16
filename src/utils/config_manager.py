@@ -136,7 +136,7 @@ class ConfigManager:
                 "level": "INFO",
                 "console_output": True,
                 "file_output": True,
-                "log_file": "monitoring.log"
+                "log_file": "logs/monitoring.log"
             }
         }
 

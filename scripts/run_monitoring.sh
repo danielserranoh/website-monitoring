@@ -94,12 +94,19 @@ mkdir -p reports screenshots logs
 
 # Backup existing logs with timestamp
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-if [ -f "monitoring.log" ] || [ -f "website_monitor.log" ] || [ -f "system_monitor.log" ] || [ -f "system_metrics.log" ] || [ -d "reports" ]; then
+if [ -f "logs/monitoring.log" ] || [ -f "logs/website_monitor.log" ] || [ -f "logs/system_monitor.log" ] || [ -f "logs/system_metrics.log" ] || [ -d "reports" ]; then
     echo "Backing up existing logs..."
     BACKUP_DIR="logs/backup_$TIMESTAMP"
     mkdir -p "$BACKUP_DIR"
 
-    # Backup log files
+    # Backup log files from logs directory
+    [ -f "logs/monitoring.log" ] && mv "logs/monitoring.log" "$BACKUP_DIR/"
+    [ -f "logs/website_monitor.log" ] && mv "logs/website_monitor.log" "$BACKUP_DIR/"
+    [ -f "logs/system_monitor.log" ] && mv "logs/system_monitor.log" "$BACKUP_DIR/"
+    [ -f "logs/system_metrics.log" ] && mv "logs/system_metrics.log" "$BACKUP_DIR/"
+    [ -f "logs/network_activity.log" ] && mv "logs/network_activity.log" "$BACKUP_DIR/"
+
+    # Also check for legacy log files in root (for backward compatibility)
     [ -f "monitoring.log" ] && mv "monitoring.log" "$BACKUP_DIR/"
     [ -f "website_monitor.log" ] && mv "website_monitor.log" "$BACKUP_DIR/"
     [ -f "system_monitor.log" ] && mv "system_monitor.log" "$BACKUP_DIR/"
@@ -119,9 +126,10 @@ fi
 
 # Clean up for fresh start
 echo "Starting fresh monitoring session..."
-rm -f *.log
+rm -f *.log  # Clean any legacy logs in root
+rm -f logs/*.log  # Clean active logs
 rm -rf reports/* screenshots/*
-mkdir -p reports screenshots
+mkdir -p reports screenshots logs
 
 # Display current configuration
 echo ""
@@ -146,7 +154,7 @@ trap cleanup SIGINT SIGTERM
 
 # Start system monitoring in background
 echo "Starting system monitoring..."
-python3 system_monitor.py > system_monitor.log 2>&1 &
+python3 -m src.monitors.system_monitor > logs/system_monitor.log 2>&1 &
 SYSTEM_PID=$!
 
 # Wait a moment for system monitor to start
@@ -154,16 +162,16 @@ sleep 2
 
 # Start website monitoring in background
 echo "Starting website monitoring..."
-python3 main.py > website_monitor.log 2>&1 &
+python3 main.py > logs/website_monitor.log 2>&1 &
 WEBSITE_PID=$!
 
 # Wait a moment for website monitor to start
 sleep 3
 
 echo "Monitoring active. Logs are being written to:"
-echo "- Website Monitor: website_monitor.log"
-echo "- System Monitor: system_monitor.log"
-echo "- Combined Log: monitoring.log"
+echo "- Website Monitor: logs/website_monitor.log"
+echo "- System Monitor: logs/system_monitor.log"
+echo "- Combined Log: logs/monitoring.log"
 echo ""
 echo "Press Ctrl+C to stop monitoring..."
 
@@ -180,8 +188,8 @@ while kill -0 $WEBSITE_PID 2>/dev/null && kill -0 $SYSTEM_PID 2>/dev/null; do
     RUNTIME_SEC=$((RUNTIME % 60))
 
     # Check reload count from logs
-    if [ -f "website_monitor.log" ]; then
-        NEW_RELOAD_COUNT=$(grep -c "Reload #" website_monitor.log 2>/dev/null || echo "0")
+    if [ -f "logs/website_monitor.log" ]; then
+        NEW_RELOAD_COUNT=$(grep -c "Reload #" logs/website_monitor.log 2>/dev/null || echo "0")
         if [ "$NEW_RELOAD_COUNT" != "$RELOAD_COUNT" ]; then
             RELOAD_COUNT=$NEW_RELOAD_COUNT
             echo "$(date): ✅ Page reload #$RELOAD_COUNT completed"
@@ -194,26 +202,26 @@ while kill -0 $WEBSITE_PID 2>/dev/null && kill -0 $SYSTEM_PID 2>/dev/null; do
     echo "  💻 System Monitor (PID: $SYSTEM_PID) - Tracking Chrome & suspects"
 
     # Show recent alerts if any
-    if [ -f "system_monitor.log" ]; then
-        RECENT_ALERTS=$(tail -5 system_monitor.log | grep -E "(WARNING|ERROR)" | wc -l)
+    if [ -f "logs/system_monitor.log" ]; then
+        RECENT_ALERTS=$(tail -5 logs/system_monitor.log | grep -E "(WARNING|ERROR)" | wc -l)
         if [ "$RECENT_ALERTS" -gt 0 ]; then
-            echo "  ⚠️  Recent alerts: $RECENT_ALERTS (check system_monitor.log)"
+            echo "  ⚠️  Recent alerts: $RECENT_ALERTS (check logs/system_monitor.log)"
         fi
     fi
 
-    echo "  💾 Logs: website_monitor.log | system_monitor.log | monitoring.log"
+    echo "  💾 Logs: logs/website_monitor.log | logs/system_monitor.log | logs/monitoring.log"
     echo ""
 done
 
 # Check which process died
 if ! kill -0 $WEBSITE_PID 2>/dev/null; then
     echo "Website monitoring process stopped unexpectedly"
-    echo "Check website_monitor.log for details"
+    echo "Check logs/website_monitor.log for details"
 fi
 
 if ! kill -0 $SYSTEM_PID 2>/dev/null; then
     echo "System monitoring process stopped unexpectedly"
-    echo "Check system_monitor.log for details"
+    echo "Check logs/system_monitor.log for details"
 fi
 
 # Cleanup

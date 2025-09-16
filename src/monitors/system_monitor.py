@@ -12,7 +12,7 @@ from ..detectors.memory_leak_detector import MemoryLeakDetector
 class SystemMonitor:
     def __init__(self, config_file='config/config.json'):
         self.config = self.load_config(config_file)
-        self.log_file = 'system_metrics.log'
+        self.log_file = 'logs/system_metrics.log'
         self.interval = self.config['system_monitoring']['monitoring_interval_seconds']
         self.running = False
 
