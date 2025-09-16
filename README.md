@@ -114,6 +114,23 @@ python -m src.monitors.system_monitor
 - **Logger**: Professional logging system with component-specific loggers
 - **Modular design**: Easy to extend and maintain
 
+## 📂 Project Structure
+
+```
+website-monitoring/
+├── src/                    # Source code modules
+│   ├── monitors/          # Monitoring components
+│   ├── detectors/         # Detection systems
+│   ├── analysis/          # Post-event analysis
+│   └── utils/             # Support utilities
+├── config/                # Configuration files
+├── scripts/               # Deployment scripts
+├── logs/                  # All log files (organized)
+├── reports/               # Analysis reports and data
+├── screenshots/           # Visual evidence
+└── main.py               # Professional CLI entry point
+```
+
 ## 📈 Performance Metrics
 
 The system tracks:
@@ -151,11 +168,16 @@ Advanced memory leak detection with multiple detection strategies:
 - `crash_page_*.html` - HTML content at crash time
 - `plots/` - Data visualization charts
 
-### Other Outputs
-- `system_metrics.log` - Continuous system monitoring data
+### Logs Directory (`logs/`)
 - `monitoring.log` - Complete activity and error log
-- `screenshots/` - Visual evidence at reload and crash times
+- `system_metrics.log` - Continuous system monitoring data
+- `system_monitor.log` - System monitoring component log
+- `website_monitor.log` - Website monitoring component log
 - `network_activity.log` - Suspect service network activity
+- `backup_YYYYMMDD_HHMMSS/` - Timestamped backup directories
+
+### Other Outputs
+- `screenshots/` - Visual evidence at reload and crash times
 
 ## 🕵️ Crash Detection Strategy
 
@@ -250,7 +272,7 @@ Each suspect service can be:
 
 After crashes occur, run the analysis tool:
 ```bash
-python analyze_crash_data.py
+python main.py --analyze
 ```
 
 This generates:
@@ -262,10 +284,10 @@ This generates:
 
 ## 🎯 Expected Workflow
 
-1. **Start Monitoring**: Run `./run_monitoring.sh` (automatically backs up existing logs)
+1. **Start Monitoring**: Run `./scripts/run_monitoring.sh` (automatically backs up existing logs)
 2. **Monitor Status**: Real-time updates every 30 seconds show progress and alerts
 3. **Wait for Crash**: System runs until crash detected (or manually stopped)
-4. **Analyze Data**: Run `python analyze_crash_data.py` to correlate crash patterns
+4. **Analyze Data**: Run `python main.py --analyze` to correlate crash patterns
 5. **Review Reports**: Check `reports/crash_analysis_report.txt` for insights
 6. **Identify Culprit**: Use suspect rankings and timeline data to focus investigation
 
@@ -276,8 +298,8 @@ The enhanced status reporting shows:
 🔍 Monitoring active - Runtime: 5m 30s
   📊 Website Monitor (PID: 13073) - Reloads: 8
   💻 System Monitor (PID: 13065) - Tracking Chrome & suspects
-  ⚠️  Recent alerts: 1 (check system_monitor.log)
-  💾 Logs: website_monitor.log | system_monitor.log | monitoring.log
+  ⚠️  Recent alerts: 1 (check logs/system_monitor.log)
+  💾 Logs: logs/website_monitor.log | logs/system_monitor.log | logs/monitoring.log
 ```
 
 - **Runtime**: Total monitoring session duration
